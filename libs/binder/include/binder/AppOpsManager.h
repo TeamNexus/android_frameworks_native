@@ -93,7 +93,7 @@ public:
         OP_USE_FINGERPRINT = 55,
         OP_BODY_SENSORS = 56,
         OP_AUDIO_ACCESSIBILITY_VOLUME = 64,
-        OP_SU = 100,
+        OP_SU = 70,
     };
 
     AppOpsManager();
