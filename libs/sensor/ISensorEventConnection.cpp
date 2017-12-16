@@ -37,7 +37,6 @@ enum {
     SET_EVENT_RATE,
     FLUSH_SENSOR,
     CONFIGURE_CHANNEL,
-    DESTROY,
 };
 
 class BpSensorEventConnection : public BpInterface<ISensorEventConnection>
@@ -97,17 +96,6 @@ public:
         remote()->transact(CONFIGURE_CHANNEL, data, &reply);
         return reply.readInt32();
     }
-
-    virtual void onLastStrongRef(const void* id) {
-        destroy();
-        BpInterface<ISensorEventConnection>::onLastStrongRef(id);
-    }
-
-protected:
-    virtual void destroy() {
-        Parcel data, reply;
-        remote()->transact(DESTROY, data, &reply);
-    }
 };
 
 // Out-of-line virtual method definition to trigger vtable emission in this
@@ -162,11 +150,6 @@ status_t BnSensorEventConnection::onTransact(
             reply->writeInt32(result);
             return NO_ERROR;
         }
-        case DESTROY: {
-            destroy();
-            return NO_ERROR;
-        }
-
     }
     return BBinder::onTransact(code, data, reply, flags);
 }
