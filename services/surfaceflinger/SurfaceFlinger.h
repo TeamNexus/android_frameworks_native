@@ -69,6 +69,10 @@
 
 #include "Effects/Daltonizer.h"
 
+#ifdef TARGET_HAS_COLOR_MATRIX_LOGIC
+#include <surfaceflinger/ColorMatrixLogic.h>
+#endif
+
 #include <map>
 #include <mutex>
 #include <queue>
@@ -90,6 +94,7 @@ class RenderEngine;
 class EventControlThread;
 class VSyncSource;
 class InjectVSyncSource;
+class ColorMatrixLogicImpl;
 
 namespace dvr {
 class VrFlinger;
@@ -821,6 +826,12 @@ private:
 
     float mSaturation = 1.0f;
     bool mForceNativeColorMode = false;
+
+#ifdef TARGET_HAS_COLOR_MATRIX_LOGIC
+    // Contains an instance of a custom color-matrix logic which
+    // replaces the software-composed version of the matrix
+    ColorMatrixLogic *mColorMatrixLogic;
+#endif
 };
 }; // namespace android
 

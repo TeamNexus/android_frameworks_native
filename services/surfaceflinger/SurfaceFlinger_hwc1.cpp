@@ -87,6 +87,10 @@
 #include <android/hardware/configstore/1.0/ISurfaceFlingerConfigs.h>
 #include <configstore/Utils.h>
 
+#ifdef TARGET_HAS_COLOR_MATRIX_LOGIC
+#include <surfaceflinger/ColorMatrixLogic.h>
+#endif
+
 #define DISPLAY_COUNT       1
 
 /*
@@ -151,7 +155,8 @@ SurfaceFlinger::SurfaceFlinger()
         mFrameBuckets(),
         mTotalTime(0),
         mLastSwapTime(0),
-        mNumLayers(0)
+        mNumLayers(0),
+        mColorMatrixLogic(NULL)
 {
     ALOGI("SurfaceFlinger is starting");
 
@@ -180,6 +185,10 @@ SurfaceFlinger::SurfaceFlinger()
             &ISurfaceFlingerConfigs::maxFrameBufferAcquiredBuffers>(2);
 
     mPrimaryDispSync.init(hasSyncFramework, dispSyncPresentTimeOffset);
+
+#ifdef TARGET_HAS_COLOR_MATRIX_LOGIC
+    mColorMatrixLogic = new ColorMatrixLogic();
+#endif
 
     char value[PROPERTY_VALUE_MAX];
 
@@ -221,6 +230,12 @@ void SurfaceFlinger::onFirstRef()
 SurfaceFlinger::~SurfaceFlinger()
 {
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+
+#ifdef TARGET_HAS_COLOR_MATRIX_LOGIC
+    // manually clean up ColorMatrixLogic
+    mColorMatrixLogic->~ColorMatrixLogic();
+#endif
+
     eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglTerminate(display);
 }
@@ -3524,29 +3539,45 @@ status_t SurfaceFlinger::onTransact(
                     mDaltonizer.setMode(ColorBlindnessMode::Simulation);
                 }
                 mDaltonize = n > 0;
+
+                // TODO: implement ColorMatrixLogic for hwc-support
+
                 invalidateHwcGeometry();
                 repaintEverything();
                 return NO_ERROR;
             }
             case 1015: {
+                int ret = NO_ERROR;
+
                 // apply a color matrix
                 n = data.readInt32();
                 mHasColorMatrix = n ? 1 : 0;
                 if (n) {
-                    // color matrix is sent as mat3 matrix followed by vec3
-                    // offset, then packed into a mat4 where the last row is
-                    // the offset and extra values are 0
                     for (size_t i = 0 ; i < 4; i++) {
-                      for (size_t j = 0; j < 4; j++) {
-                          mColorMatrix[i][j] = data.readFloat();
-                      }
+                        for (size_t j = 0; j < 4; j++) {
+                            mColorMatrix[i][j] = data.readFloat();
+                        }
                     }
                 } else {
                     mColorMatrix = mat4();
                 }
+
+#ifdef TARGET_HAS_COLOR_MATRIX_LOGIC
+                // send matrix to custom processing logic and assert result
+                ret = mColorMatrixLogic->update(mColorMatrix);
+                if (ret != NO_ERROR) {
+                    ALOGE("ColorMatrixLogic failed to update color matrix: %d", ret);
+                    goto cml_exit;
+                }
+
+                // force-disable software color matrix if everything went well
+                mHasColorMatrix = false;
+
+cml_exit:
+#endif // TARGET_HAS_COLOR_MATRIX_LOGIC
                 invalidateHwcGeometry();
                 repaintEverything();
-                return NO_ERROR;
+                return ret;
             }
             // This is an experimental interface
             // Needs to be shifted to proper binder interface when we productize

@@ -175,7 +175,8 @@ SurfaceFlinger::SurfaceFlinger()
         mNumLayers(0),
         mVrFlingerRequestsDisplay(false),
         mMainThreadId(std::this_thread::get_id()),
-        mComposerSequenceId(0)
+        mComposerSequenceId(0),
+        mColorMatrixLogic(nullptr)
 {
     ALOGI("SurfaceFlinger is starting");
 
