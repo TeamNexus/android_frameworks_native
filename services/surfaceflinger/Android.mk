@@ -107,11 +107,6 @@ LOCAL_EXPORT_SHARED_LIBRARY_HEADERS := \
 
 LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code -std=c++1z
 
-ifneq ($(TARGET_COLOR_MATRIX_LOGIC),)
-    LOCAL_CFLAGS += -DTARGET_HAS_COLOR_MATRIX_LOGIC
-    LOCAL_SHARED_LIBRARIES += $(TARGET_COLOR_MATRIX_LOGIC)
-endif
-
 include $(BUILD_SHARED_LIBRARY)
 
 ###############################################################
