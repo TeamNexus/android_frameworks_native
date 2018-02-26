@@ -3346,6 +3346,10 @@ void SurfaceFlinger::dumpAllLocked(const Vector<String16>& args, size_t& index,
             hwc.initCheck()==NO_ERROR ? "present" : "not present",
                     (mDebugDisableHWC || mDebugRegion || mDaltonize
                             || mHasColorMatrix) ? "disabled" : "enabled");
+    result.appendFormat("    mDebugDisableHWC=%d\n", mDebugDisableHWC);
+    result.appendFormat("    mDebugRegion=%d\n", mDebugRegion);
+    result.appendFormat("    mDaltonize=%d\n", mDaltonize);
+    result.appendFormat("    mHasColorMatrix=%d\n", mHasColorMatrix);
     hwc.dump(result);
 
     /*
