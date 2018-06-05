@@ -2,4 +2,5 @@ service inputflinger /system/bin/inputflinger
     class main
     user system
     group input wakelock
+    writepid /dev/cpuset/foreground/boost/tasks
 #    onrestart restart zygote
