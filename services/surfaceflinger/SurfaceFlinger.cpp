@@ -4560,6 +4560,8 @@ status_t SurfaceFlinger::onTransact(
                 return NO_ERROR;
             }
             case 1015: {
+                float sum = 0.0F;
+
                 Mutex::Autolock _l(mStateLock);
                 // apply a color matrix
                 n = data.readInt32();
@@ -4568,10 +4570,16 @@ status_t SurfaceFlinger::onTransact(
                     for (size_t i = 0 ; i < 4; i++) {
                         for (size_t j = 0; j < 4; j++) {
                             mClientColorMatrix[i][j] = data.readFloat();
+                            sum += mClientColorMatrix[i][j];
                         }
                     }
-                } else {
+                }
+
+                // sum of matrix equals to 4 if the color calibration is deactivated
+                // framework still send a full matrix, resulting in a disabled HWC.
+                if (!n || ((int)sum) == 4) {
                     mClientColorMatrix = mat4();
+                    mHasColorMatrix = false;
                 }
 
                 // Check that supplied matrix's last row is {0,0,0,1} so we can avoid
