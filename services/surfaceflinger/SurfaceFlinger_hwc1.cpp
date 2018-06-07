@@ -3547,6 +3547,8 @@ status_t SurfaceFlinger::onTransact(
                 return NO_ERROR;
             }
             case 1015: {
+                float sum = 0.0F;
+
                 // apply a color matrix
                 n = data.readInt32();
                 mHasColorMatrix = n ? 1 : 0;
@@ -3557,11 +3559,18 @@ status_t SurfaceFlinger::onTransact(
                     for (size_t i = 0 ; i < 4; i++) {
                       for (size_t j = 0; j < 4; j++) {
                           mColorMatrix[i][j] = data.readFloat();
+                          sum += mColorMatrix[i][j];
                       }
                     }
-                } else {
-                    mColorMatrix = mat4();
                 }
+
+                // sum of matrix equals to 4 if the color calibration is deactivated
+                // framework still send a full matrix, resulting in a disabled HWC.
+                if (!n || ((int)sum) == 4) {
+                    mColorMatrix = mat4();
+                    mHasColorMatrix = false;
+                }
+
                 invalidateHwcGeometry();
                 repaintEverything();
                 return NO_ERROR;
