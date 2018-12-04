@@ -1543,10 +1543,7 @@ void SurfaceFlinger::onMessageReceived(int32_t what) {
     ATRACE_CALL();
     switch (what) {
         case MessageQueue::INVALIDATE: {
-            bool presentFenceIsNotReliable = getHwComposer().hasCapability(
-                    HWC2::Capability::PresentFenceIsNotReliable);
             bool frameMissed = !mHadClientComposition &&
-                    !presentFenceIsNotReliable &&
                     mPreviousPresentFence != Fence::NO_FENCE &&
                     (mPreviousPresentFence->getSignalTime() ==
                             Fence::SIGNAL_TIME_PENDING);
@@ -1572,16 +1569,7 @@ void SurfaceFlinger::onMessageReceived(int32_t what) {
                 // a new buffer was latched, or if HWC has requested a full
                 // repaint
                 signalRefresh();
-                break;
             }
-
-            // in case of unreliable retire-fences in combiniation with
-            // invalid transaction flags, commit transactions even if
-            // no flags are set
-            if (presentFenceIsNotReliable && mTransactionPending) {
-                commitTransaction();
-            }
-
             break;
         }
         case MessageQueue::REFRESH: {
