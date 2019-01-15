@@ -27,7 +27,6 @@
 #include <cutils/properties.h>
 #include <utils/String8.h>
 #include <utils/SystemClock.h>
-#include <utils/CallStack.h>
 
 #include <private/binder/Static.h>
 
@@ -165,13 +164,8 @@ public:
         int n = 0;
         while (uptimeMillis() < timeout) {
             n++;
-            if (isVendorService) {
-                property_get("ro.build.type", buildType, "unknown");
-                ALOGI("Waiting for vendor service %s...", String8(name).string());
-                if (isBuildTypeEng) CallStack stack(LOG_TAG);
-            } else if (n%10 == 0) {
-                ALOGI("Waiting for service %s...", String8(name).string());
-            }
+            ALOGI("Waiting for service '%s' on '%s'...", String8(name).string(),
+                ProcessState::self()->getDriverName().c_str());
             usleep(1000*sleepTime);
 
             sp<IBinder> svc = checkService(name);
